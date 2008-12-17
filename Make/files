@@ -1,0 +1,8 @@
+canteraGasMixWrapper.C
+canteraThermo.C
+canteraMixture.C
+canteraChemistryModel.C
+canteraLocalTimeChemistryModel.C
+canteraMixtureThermos.C
+
+LIB = $(FOAM_USER_LIBBIN)/libcanteraThermosChemistry

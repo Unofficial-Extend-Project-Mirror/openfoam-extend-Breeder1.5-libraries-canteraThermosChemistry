@@ -1,0 +1,29 @@
+EXE_INC = -I$(LIB_SRC)/finiteVolume/lnInclude \
+    -I$(LIB_SRC)/thermophysicalModels/specie/lnInclude \
+    -I$(LIB_SRC)/thermophysicalModels/combustion/lnInclude \
+    -I$(LIB_SRC)/thermophysicalModels/basic/lnInclude \
+    -I$(LIB_SRC)/thermophysicalModels/chemistryModel/lnInclude \
+    -I$(LIB_SRC)/ODE/lnInclude \
+    -I$(CANTERA_HOME)/include	\
+    -I$(WM_PROJECT_USER_DIR)/Libraries/alternateChemistryModels/lnInclude \
+
+LIB_LIBS = -lfiniteVolume \
+    -lbasicThermophysicalModels \
+    -lspecie \
+    -lchemistryModel \
+    -lcombustionThermophysicalModels \
+    -lODE \
+    -L$(CANTERA_HOME)/lib \
+    -L$(SUNDIALS_HOME)/lib \
+-luser -loneD -lzeroD -lequil -lkinetics -ltransport -lthermo -lctnumerics -lctmath -ltpx -lctspectra -lconverters -lctbase -lsundials_cvodes -lsundials_nvecserial -lctf2c -lctcxx \
+    -L$(FOAM_USER_LIBBIN) \
+    -lalternateChemistryModels // -lctlapack -lctblas 
+
+ifeq ($(strip $(DYLD_LIBRARY_PATH)),)
+// LIB_LIBS := -lctlapack -lctblas $(LIB_LIBS)
+endif
+
+ifneq ($(strip $(DYLD_LIBRARY_PATH)),)
+LIB_LIBS := -framework Accelerate -single_module $(LIB_LIBS)
+endif
+// LIB_LIBS := -framework Accelerate -single_module $(LIB_LIBS)
