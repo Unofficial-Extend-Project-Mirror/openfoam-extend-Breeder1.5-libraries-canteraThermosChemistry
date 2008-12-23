@@ -41,66 +41,6 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-// const ThermoType& canteraMixture<ThermoType>::constructSpeciesData
-// (
-//     const dictionary& thermoDict
-// )
-// {
-//     forAll(species_, i)
-//     {
-//         speciesData_.set
-//         (
-//             i,
-//             new ThermoType(thermoDict.lookup(species_[i]))
-//         );
-//     }
-
-//     return speciesData_[0];
-// }
-
-
-// void canteraMixture<ThermoType>::correctMassFractions()
-// {
-//     volScalarField Yt = Y_[0];
-
-//     for(label n=1; n<Y_.size(); n++)
-//     {
-//         Yt += Y_[n];
-//     }
-
-//     forAll (Y_, n)
-//     {
-//         Y_[n] /= Yt;
-//     }
-// }
-
-
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
-
-// canteraMixture<ThermoType>::canteraMixture
-// (
-//     const dictionary& thermoDict,
-//     const wordList& specieNames,
-//     const HashPtrTable<ThermoType>& specieThermoData,
-//     const fvMesh& mesh
-// )
-// :
-//     combustionMixture(thermoDict, specieNames, mesh),
-//     speciesData_(species_.size()),
-//     mixture_("mixture", *specieThermoData[specieNames[0]])
-// {
-//     forAll(species_, i)
-//     {
-//         speciesData_.set
-//         (
-//             i,
-//             new ThermoType(*specieThermoData[species_[i]])
-//         );
-//     }
-
-//     correctMassFractions();
-// }
-
 
 canteraMixture::canteraMixture
 (
@@ -118,11 +58,11 @@ canteraMixture::canteraMixture
 {
     //    correctMassFractions();
 
-    const Cantera::XML_Node& xml=*(speciesData_.gas().speciesData());
+    //    const Cantera::XML_Node& xml=*(speciesData_.gas().speciesData());
     //    Info << "Anzahl: " << xml.nChildren() << endl;
     //    xml.write(std::cout);
 
-    speciesDataMirror_.setSize(xml.nChildren()/2);
+    speciesDataMirror_.setSize(Y().size());
 
     fileName thermoStandinFile(thermoDict.lookup("canteraStandinThermoFile"));
     thermoStandinFile.expand();
@@ -138,17 +78,12 @@ canteraMixture::canteraMixture
 
     HashPtrTable<speciesType> standinThermo(tf);
 
-    //    Info << standinThermo.toc() << endl;
-
-    for(label i=0;i<xml.nChildren()/2;i++) {
-        Cantera::XML_Node& spec=xml.child(2*i+1);
-        word name(spec["name"]);
-        //        Info << i << " " << name << endl;
-        //        const speciesType *tmp=standinThermo[name];
+    forAll(Y(),i) {
+        word name(Y()[i].name());
         speciesDataMirror_.set(
             i,
             new speciesType(name,*standinThermo[name])
-        );
+        );     
     }
     //    Info << "Fertig " << endl;
 }
