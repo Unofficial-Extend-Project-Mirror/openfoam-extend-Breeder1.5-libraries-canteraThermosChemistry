@@ -256,7 +256,7 @@ scalar canteraChemistryModel::solve(
 void canteraChemistryModel::calcDQ(volScalarField &dQ)
 {
     WarningIn("canteraChemistryModel::calcDQ(volScalarField &dQ)")
-        << "Seltsamer Fehler in Bezug auf das RR_-Feld. Deswegen geh ich"
+        << "Strange error concerning the RR-Field. dQ is currently not computed"
             << endl;
 
 
