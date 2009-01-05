@@ -64,7 +64,7 @@ canteraMixture::canteraMixture
 
     speciesDataMirror_.setSize(Y().size());
 
-    fileName thermoStandinFile(thermoDict.lookup("canteraStandinThermoFile"));
+    fileName thermoStandinFile(thermoDict.subDict("cantera").lookup("standinThermoFile"));
     thermoStandinFile.expand();
 
     WarningIn("canteraMixture::canteraMixture")
