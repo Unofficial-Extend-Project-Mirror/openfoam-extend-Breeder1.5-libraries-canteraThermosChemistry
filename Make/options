@@ -15,12 +15,12 @@ LIB_LIBS = -lfiniteVolume \
     -lODE \
     -L$(CANTERA_HOME)/lib \
     -L$(SUNDIALS_HOME)/lib \
--luser -loneD -lzeroD -lequil -lkinetics -ltransport -lthermo -lctnumerics -lctmath -ltpx -lctspectra -lconverters -lctbase -lsundials_cvodes -lsundials_nvecserial -lctf2c -lctcxx \
+-luser -loneD -lzeroD -lequil -lkinetics -ltransport -lthermo -lctnumerics -lctmath -ltpx -lctspectra -lconverters -lctbase -lsundials_cvodes -lsundials_nvecserial -lctf2c -lctcxx  \
     -L$(FOAM_USER_LIBBIN) \
     -lalternateChemistryModels
 
 ifeq ($(DYLD_LIBRARY_PATH),)
-  LIB_LIBS := -lctlapack -lctblas $(LIB_LIBS)
+  LIB_LIBS := $(LIB_LIBS) -lctlapack -lctblas 
 else
   LIB_LIBS := -framework Accelerate -single_module $(LIB_LIBS)
 endif
