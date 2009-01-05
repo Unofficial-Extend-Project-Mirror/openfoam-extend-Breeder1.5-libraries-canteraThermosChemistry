@@ -17,14 +17,10 @@ LIB_LIBS = -lfiniteVolume \
     -L$(SUNDIALS_HOME)/lib \
 -luser -loneD -lzeroD -lequil -lkinetics -ltransport -lthermo -lctnumerics -lctmath -ltpx -lctspectra -lconverters -lctbase -lsundials_cvodes -lsundials_nvecserial -lctf2c -lctcxx \
     -L$(FOAM_USER_LIBBIN) \
-    -lalternateChemistryModels \
-    -lctlapack -lctblas 
+    -lalternateChemistryModels
 
-ifeq ($(strip $(DYLD_LIBRARY_PATH)),)
-// LIB_LIBS := -lctlapack -lctblas $(LIB_LIBS)
+ifeq ($(DYLD_LIBRARY_PATH),)
+  LIB_LIBS := -lctlapack -lctblas $(LIB_LIBS)
+else
+  LIB_LIBS := -framework Accelerate -single_module $(LIB_LIBS)
 endif
-
-ifneq ($(strip $(DYLD_LIBRARY_PATH)),)
-LIB_LIBS := -framework Accelerate -single_module $(LIB_LIBS)
-endif
-// LIB_LIBS := -framework Accelerate -single_module $(LIB_LIBS)
