@@ -81,9 +81,6 @@ scalar canteraLocalTimeChemistryModel::solve(
 
     scalarList RRtmp(RR_.size());
     Reactor react;
-    ReactorNet sim;
-    sim.addReactor(&react);
-
     scalar Ns = RR_.size(); //number of species
     const canteraThermo &gas1=mix.cellMixture(0);	
     scalarList mw(RR_.size());
@@ -93,8 +90,11 @@ scalar canteraLocalTimeChemistryModel::solve(
     const scalarField localTime=characteristicTime()().internalField();
 
     forAll(rho_,cellI) {	
+        ReactorNet sim;
+        sim.addReactor(&react);
+
         //        Info << cellI << endl;
-		scalarField c0(Ns), c1(Ns);
+        scalarField c0(Ns), c1(Ns);
         const canteraThermo &gas=mix.cellMixture(cellI);
         gas.gas().getConcentrations(c0.begin());
 
