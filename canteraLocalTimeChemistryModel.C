@@ -38,6 +38,7 @@ License
 #include "hMixtureThermo.H"
 
 #include <cantera/Cantera.h>
+#include <cantera/kernel/CVodesIntegrator.h>
 #include <cantera/zerodim.h>
 
 #include "addToRunTimeSelectionTable.H"
@@ -111,25 +112,34 @@ scalar canteraLocalTimeChemistryModel::solve(
 //             Info << "Vorher:  " << gas << endl;
 //         }
         while(timeLeft>SMALL) {
-            // This doesn't seem to work yet - overshots the time
-            sim.integrator().setMaxStepSize(timeLeft);
-            //            sim.initialize(old);
-            scalar now=sim.step(timeLeft);
-            scalar dt=now-old;
-            //            Info << timeLeft << " " << now << " " << dt << endl;
-            if(old>0) {
-                // discard the first timestep
-                dtMin=min(dt,dtMin);
+            try {
+                // This doesn't seem to work yet - overshots the time
+                sim.integrator().setMaxStepSize(timeLeft);
+                //            sim.initialize(old);
+                scalar now=sim.step(timeLeft);
+                scalar dt=now-old;
+                //            Info << timeLeft << " " << now << " " << dt << endl;
+                if(old>0) {
+                    // discard the first timestep
+                    dtMin=min(dt,dtMin);
+                }
+                old=now; 
+                timeLeft=deltaT-now;
+            } catch(const Cantera::CVodesErr& e) {
+                FatalErrorIn("canteraLocalTimeChemistryModel::solve")
+                    << " With the state: " << gas 
+                        << " and the mixture " << c0 
+                        << " Cantera complained in cell " << cellI << endl
+                    //                   << e << endl
+                        << abort(FatalError) ;
             }
-            old=now;
-            timeLeft=deltaT-now;
         }
 //         if(gas[0]>SMALL) {
 //             Info << "Nachher: " << gas << endl;
 //         }
         
         gas.gas().getConcentrations(c1.begin());
-		scalarField dc = c1 - c0;
+        scalarField dc = c1 - c0;
         //        Info << cellI << " " << RRtmp << endl;
         for(label i=0; i<Ns; i++)
         {

@@ -38,6 +38,7 @@ License
 #include "hMixtureThermo.H"
 
 #include <cantera/Cantera.h>
+#include <cantera/kernel/CVodesIntegrator.h>
 #include <cantera/zerodim.h>
 
 #include "addToRunTimeSelectionTable.H"
@@ -197,9 +198,6 @@ scalar canteraChemistryModel::solve(
 
     scalarList RRtmp(RR_.size());
     Reactor react;
-    ReactorNet sim;
-    sim.addReactor(&react);
-
     scalar Ns = RR_.size(); //number of species
     const canteraThermo &gas1=mix.cellMixture(0);	
     scalarList mw(RR_.size());
@@ -207,8 +205,11 @@ scalar canteraChemistryModel::solve(
     gas1.gas().getMolecularWeights(mw.begin());
 
     forAll(rho_,cellI) {	
+        ReactorNet sim;
+        sim.addReactor(&react);
+
         //        Info << cellI << endl;
-		scalarField c0(Ns), c1(Ns);
+        scalarField c0(Ns), c1(Ns);
         const canteraThermo &gas=mix.cellMixture(cellI);
         gas.gas().getConcentrations(c0.begin());
 
@@ -223,25 +224,34 @@ scalar canteraChemistryModel::solve(
 //             Info << "Vorher:  " << gas << endl;
 //         }
         while(timeLeft>SMALL) {
-            // This doesn't seem to work yet - overshots the time
-            sim.integrator().setMaxStepSize(timeLeft);
-            //            sim.initialize(old);
-            scalar now=sim.step(timeLeft);
-            scalar dt=now-old;
-            //            Info << timeLeft << " " << now << " " << dt << endl;
-            if(old>0) {
-                // discard the first timestep
-                dtMin=min(dt,dtMin);
+            try {
+                // This doesn't seem to work yet - overshots the time
+                sim.integrator().setMaxStepSize(timeLeft);
+                //            sim.initialize(old);
+                scalar now=sim.step(timeLeft);
+                scalar dt=now-old;
+                //            Info << timeLeft << " " << now << " " << dt << endl;
+                if(old>0) {
+                    // discard the first timestep
+                    dtMin=min(dt,dtMin);
+                }
+                old=now; 
+                timeLeft=deltaT-now;
+            } catch(const Cantera::CVodesErr& e) {
+                FatalErrorIn("canteraLocalTimeChemistryModel::solve")
+                    << " With the state: " << gas 
+                        << " and the mixture " << c0 
+                        << " Cantera complained in cell " << cellI << endl
+                    //                   << e << endl
+                        << abort(FatalError) ;
             }
-            old=now;
-            timeLeft=deltaT-now;
         }
 //         if(gas[0]>SMALL) {
 //             Info << "Nachher: " << gas << endl;
 //         }
         
         gas.gas().getConcentrations(c1.begin());
-		scalarField dc = c1 - c0;
+        scalarField dc = c1 - c0;
         //        Info << cellI << " " << RRtmp << endl;
         for(label i=0; i<Ns; i++)
         {
