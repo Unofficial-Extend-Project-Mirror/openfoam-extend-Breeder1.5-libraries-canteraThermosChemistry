@@ -50,14 +50,16 @@ const canteraThermo& canteraMixture::cellMixture
     for (label n=0; n<Y_.size(); n++)
     {
         yTemp_[n] = Y_[n][celli];
+        // make sure that none of the species becomes exactly zero: otherwise Cantera Chemistry solver might crash
+        if(yTemp_[n]<SMALL) {
+            yTemp_[n]=SMALL;
+        }
     }
     
     scalar T=T_[celli];
     scalar p=p_[celli];
 
     speciesData_.setState(T,p,yTemp_);
-
-    //    Info << celli << " : " << T << " " << p << " - " << yTemp_ << endl;
 
     return speciesData_;
 }
