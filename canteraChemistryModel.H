@@ -44,6 +44,10 @@ SourceFiles
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+namespace CanteraZeroD {
+    class ReactorNet;
+}
+
 namespace Foam
 {
 
@@ -64,6 +68,20 @@ protected:
         //- the chemical source term
         PtrList<scalarField> RR_;
 
+        //- Relative tolerance to control CVode
+        scalar relTol_;
+        //- Absolute tolerance to control CVode
+        scalar absTol_;
+        //- Relative tolerance sensitivity to control CVode
+        scalar relTolSens_;
+        //- Absolute tolerance sensitivity to control CVode
+        scalar absTolSens_;
+        //- Maximum number of steps to control CVode
+        label maxSteps_;
+        //- Minimum number stepsize to control CVode
+        scalar minH_;
+
+    void setNumerics(CanteraZeroD::ReactorNet &r);
 public:
 
     TypeName("canteraChemistryModel");

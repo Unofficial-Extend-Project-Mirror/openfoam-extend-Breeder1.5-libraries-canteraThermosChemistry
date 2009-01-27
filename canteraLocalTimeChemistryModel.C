@@ -102,6 +102,7 @@ scalar canteraLocalTimeChemistryModel::solve(
         react.insert(gas.gas());
         //        sim.initialize(0);
         sim.setInitialTime(0);
+        setNumerics(sim);
 
         scalar deltaT=min(defaultDeltaT,localTime[cellI]);
         scalar timeLeft=deltaT;

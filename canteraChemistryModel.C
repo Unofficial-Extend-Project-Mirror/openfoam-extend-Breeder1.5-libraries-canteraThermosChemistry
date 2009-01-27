@@ -58,7 +58,13 @@ canteraChemistryModel::canteraChemistryModel
     const volScalarField& rho
 )
 :
-    alternateChemistryModel(thermo,rho)
+    alternateChemistryModel(thermo,rho),
+    relTol_(1e-9),
+    absTol_(1e-15),
+    relTolSens_(1e-5),
+    absTolSens_(1e-4),
+    maxSteps_(20000),
+    minH_(SMALL)
 {
     if(!isA<hMixtureThermo<canteraMixture> >(thermo)){
         FatalErrorIn("canteraChemistryModel::canteraChemistryModel")
@@ -75,8 +81,30 @@ canteraChemistryModel::canteraChemistryModel
             new scalarField(rho_.size(), 0.0)
         );
     }
-}
 
+    IOdictionary chemistryPropertiesDict
+        (
+            IOobject
+            (
+                "chemistryProperties",
+                rho.time().constant(),
+                rho.db(),
+                IOobject::MUST_READ,
+                IOobject::NO_WRITE
+            )
+        );
+
+    if(chemistryPropertiesDict.found("canteraNumerics")) {
+        const dictionary &cn=chemistryPropertiesDict.subDict("canteraNumerics");
+
+        relTol_=cn.lookupOrDefault<scalar>("relativeTolerance",1e-9);
+        absTol_=cn.lookupOrDefault<scalar>("absoluteTolerance",1e-15);
+        relTolSens_=cn.lookupOrDefault<scalar>("relativeSensitivityTolerance",1e-5);
+        absTolSens_=cn.lookupOrDefault<scalar>("absoluteSensitivityTolerance",1e-4);
+        maxSteps_=cn.lookupOrDefault<label>("maximumSteps",20000);
+        minH_=cn.lookupOrDefault<scalar>("minimumStepSize",SMALL);
+    }
+}
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
@@ -206,8 +234,9 @@ scalar canteraChemistryModel::solve(
 
     forAll(rho_,cellI) {	
         ReactorNet sim;
+        setNumerics(sim);
         sim.addReactor(&react);
-
+        
         //        Info << cellI << endl;
         scalarField c0(Ns), c1(Ns);
         const canteraThermo &gas=mix.cellMixture(cellI);
@@ -261,6 +290,17 @@ scalar canteraChemistryModel::solve(
 
     return dtMin; //das ist nur für die Schrittweitenstrg da, denk ich
 
+}
+
+void canteraChemistryModel::setNumerics(ReactorNet &sim) {
+    sim.setTolerances(relTol_,absTol_);
+    sim.setSensitivityTolerances(relTolSens_,absTolSens_);
+
+    // these two calls don't seem to work
+    sim.integrator().setMaxSteps(maxSteps_);
+    sim.integrator().setMinStepSize(minH_);
+
+    sim.initialize();
 }
 
 void canteraChemistryModel::calcDQ(volScalarField &dQ)
