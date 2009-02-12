@@ -127,6 +127,8 @@ scalar canteraLocalTimeChemistryModel::solve(
                 old=now; 
                 timeLeft=deltaT-now;
             } catch(const Cantera::CVodesErr& e) {
+                Cantera::showErrors(std::cerr);
+
                 FatalErrorIn("canteraLocalTimeChemistryModel::solve")
                     << " With the state: " << gas 
                         << " and the mixture " << c0 

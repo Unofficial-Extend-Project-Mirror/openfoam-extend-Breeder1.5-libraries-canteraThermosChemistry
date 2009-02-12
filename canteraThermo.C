@@ -56,6 +56,7 @@ Foam::canteraThermo::canteraThermo(const dictionary& dict)
         );
     } 
     catch(Cantera::CanteraError) {
+        Cantera::showErrors(std::cerr);
         
         FatalErrorIn("canteraThermo::canteraThermo(const dictionary& dict)")
             << "Cantera has a problem: " << endl
