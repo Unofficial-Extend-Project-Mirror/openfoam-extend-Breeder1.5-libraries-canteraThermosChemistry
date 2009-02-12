@@ -51,8 +51,22 @@ Foam::scalar Foam::canteraThermo::TH(const scalar H,const scalar T0) const
 //     if(T0!=gas().temperature()) {
 //         gas().setTemperature(T0);
 //     }
-    gas().setState_HP(H,gas().pressure());
 
+    try {
+        gas().setState_HP(H,gas().pressure());
+    } catch(Cantera::CanteraError) {
+        scalarList comp(gas().nSpecies());
+        gas().getMassFractions(comp.begin());
+
+        Cantera::showErrors(std::cerr);
+
+        FatalErrorIn("canteraThermo::TH")
+            << " With the state: " << comp
+                << " and the enthalpy " << H 
+                << " and the T0 " << T0
+                << " Cantera complained " << endl
+                << abort(FatalError) ;
+    }
     //    Info << T0 << " - " << H << " -> " << gas().temperature() << endl;
 
     return gas().temperature();
