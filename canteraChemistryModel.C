@@ -232,11 +232,11 @@ scalar canteraChemistryModel::solve(
     //delete &gas1;
     gas1.gas().getMolecularWeights(mw.begin());
 
-    forAll(rho_,cellI) {	
+    forAll(rho_,cellI) {
+      try {
         ReactorNet sim;
-        setNumerics(sim);
         sim.addReactor(&react);
-        
+
         //        Info << cellI << endl;
         scalarField c0(Ns), c1(Ns);
         const canteraThermo &gas=mix.cellMixture(cellI);
@@ -245,6 +245,7 @@ scalar canteraChemistryModel::solve(
         react.insert(gas.gas());
         //        sim.initialize(0);
         sim.setInitialTime(0);
+        setNumerics(sim);
 
         scalar timeLeft=deltaT;
         scalar old=0;
@@ -269,11 +270,11 @@ scalar canteraChemistryModel::solve(
             } catch(const Cantera::CVodesErr& e) {
                 Cantera::showErrors(std::cerr);
 
-                FatalErrorIn("canteraLocalTimeChemistryModel::solve")
+                FatalErrorIn("canteraChemistryModel::solve")
                     << " With the state: " << gas 
                         << " and the mixture " << c0 
-                        << " Cantera complained in cell " << cellI << endl
-                    //                   << e << endl
+                        << " Cantera complained in cell " << cellI
+                        << " with a Cantera::CVodesErr"  << endl
                         << abort(FatalError) ;
             }
         }
@@ -288,6 +289,14 @@ scalar canteraChemistryModel::solve(
         {
             RR_[i][cellI] = dc[i]*mw[i]/deltaT;
         }
+      } catch(const Cantera::CanteraError& e) {
+          Cantera::showErrors(std::cerr);
+          
+          FatalErrorIn("canteraChemistryModel::solve")
+                  << " Cantera complained in cell " << cellI
+                  << " with a Cantera::CanteraError"  << endl
+                  << abort(FatalError) ;
+      }
     }
 
     return dtMin; //das ist nur für die Schrittweitenstrg da, denk ich

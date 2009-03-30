@@ -91,6 +91,7 @@ scalar canteraLocalTimeChemistryModel::solve(
     const scalarField localTime=characteristicTime()().internalField();
 
     forAll(rho_,cellI) {	
+      try {
         ReactorNet sim;
         sim.addReactor(&react);
 
@@ -148,6 +149,14 @@ scalar canteraLocalTimeChemistryModel::solve(
         {
             RR_[i][cellI] = dc[i]*mw[i]/deltaT;
         }
+      } catch(const Cantera::CanteraError& e) {
+          Cantera::showErrors(std::cerr);
+          
+          FatalErrorIn("canteraLocalTimeChemistryModel::solve")
+                  << " Cantera complained in cell " << cellI
+                  << " with a Cantera::CanteraError"  << endl
+                  << abort(FatalError) ;
+      }
     }
 
     return dtMin; //das ist nur für die Schrittweitenstrg da, denk ich
