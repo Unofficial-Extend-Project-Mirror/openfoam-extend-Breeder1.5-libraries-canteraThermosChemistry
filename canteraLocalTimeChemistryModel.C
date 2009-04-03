@@ -93,40 +93,50 @@ scalar canteraLocalTimeChemistryModel::solve(
     forAll(rho_,cellI) {	
       try {
         ReactorNet sim;
+        //void setTolerances(doublereal rtol, doublereal atol) 
+// 	Info << "rtol=  " << sim.rtol() << "; atol=  " << sim.atol() << endl;
+ 	sim.setTolerances(1e-8, 1e-9);
+// 	setNumerics(sim);
+// 	Info << "rtol=  " << sim.rtol() << "; atol=  " << sim.atol() << endl;
         sim.addReactor(&react);
+        //sim.setInitialTime(0);
+
 
         //        Info << cellI << endl;
         scalarField c0(Ns), c1(Ns);
-        const canteraThermo &gas=mix.cellMixture(cellI);
+        const canteraThermo &gas=mix.cellMixture(cellI);  //reacting gas
+    	const canteraThermo &gas0=mix.cellMixture(cellI); //nonreacting reservoir
+
         gas.gas().getConcentrations(c0.begin());
 
+ 	//set up reactor
         react.insert(gas.gas());
-        //        sim.initialize(0);
-        sim.setInitialTime(0);
-        setNumerics(sim);
+
+	//to make reactor isobaric we need a reservoir for expansion
+    	//set up inert reservoir
+	Reservoir inert;
+	inert.insert(gas0.gas());
+
+	//install a wall to make the reactor isobaric
+	//the wall area should be 1x-10x larger than the reactor volume
+	//this is a tradeoff between stability and accuracy
+	//wrong choice is a popular source for cantera crashes
+	Wall w;  w.setArea(1); 
+	w.setExpansionRateCoeff(10); 
+	w.install(react,inert);
+
+
+
+
 
         scalar deltaT=min(defaultDeltaT,localTime[cellI]);
-        scalar timeLeft=deltaT;
+//     	Info << "defaultDeltaT=  " << defaultDeltaT << "localTime=  "<<localTime[cellI]< "deltaT= "<< deltaT <<endl;
 
-        scalar old=0;
 
-//         if(gas[0]>SMALL) {
-//             Info << "Vorher:  " << gas << endl;
-//         }
-        while(timeLeft>SMALL) {
+//         while(now < deltaT) { //use this loop togeter with step
             try {
-                // This doesn't seem to work yet - overshots the time
-                sim.integrator().setMaxStepSize(timeLeft);
-                //            sim.initialize(old);
-                scalar now=sim.step(timeLeft);
-                scalar dt=now-old;
-                //            Info << timeLeft << " " << now << " " << dt << endl;
-                if(old>0) {
-                    // discard the first timestep
-                    dtMin=min(dt,dtMin);
-                }
-                old=now; 
-                timeLeft=deltaT-now;
+                sim.advance(deltaT);
+//                  now = sim.step(deltaT);
             } catch(const Cantera::CVodesErr& e) {
                 Cantera::showErrors(std::cerr);
 
@@ -137,11 +147,9 @@ scalar canteraLocalTimeChemistryModel::solve(
                     //                   << e << endl
                         << abort(FatalError) ;
             }
-        }
-//         if(gas[0]>SMALL) {
-//             Info << "Nachher: " << gas << endl;
 //         }
-        
+
+
         gas.gas().getConcentrations(c1.begin());
         scalarField dc = c1 - c0;
         //        Info << cellI << " " << RRtmp << endl;
@@ -151,7 +159,7 @@ scalar canteraLocalTimeChemistryModel::solve(
         }
       } catch(const Cantera::CanteraError& e) {
           Cantera::showErrors(std::cerr);
-          
+
           FatalErrorIn("canteraLocalTimeChemistryModel::solve")
                   << " Cantera complained in cell " << cellI
                   << " with a Cantera::CanteraError"  << endl
