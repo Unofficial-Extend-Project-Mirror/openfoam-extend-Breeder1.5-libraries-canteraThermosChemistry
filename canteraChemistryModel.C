@@ -64,7 +64,9 @@ canteraChemistryModel::canteraChemistryModel
     relTolSens_(1e-5),
     absTolSens_(1e-4),
     maxSteps_(20000),
-    minH_(SMALL)
+    minH_(SMALL),
+    useOldImplementation_(false),
+    expansionRateCoeff_(10.)
 {
     if(!isA<hMixtureThermo<canteraMixture> >(thermo)){
         FatalErrorIn("canteraChemistryModel::canteraChemistryModel")
@@ -103,6 +105,8 @@ canteraChemistryModel::canteraChemistryModel
         absTolSens_=cn.lookupOrDefault<scalar>("absoluteSensitivityTolerance",1e-4);
         maxSteps_=cn.lookupOrDefault<label>("maximumSteps",20000);
         minH_=cn.lookupOrDefault<scalar>("minimumStepSize",SMALL);
+        useOldImplementation_=cn.lookupOrDefault<bool>("useOldImplementation",false);
+        expansionRateCoeff_=cn.lookupOrDefault<scalar>("expansionRateCoeff",10);
     }
 }
 

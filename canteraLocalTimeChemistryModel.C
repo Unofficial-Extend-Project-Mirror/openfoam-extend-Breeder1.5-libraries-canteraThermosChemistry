@@ -98,17 +98,19 @@ scalar canteraLocalTimeChemistryModel::solve(
     //the wall area should be 1x-10x larger than the reactor volume
     //this is a tradeoff between stability and accuracy
     //wrong choice is a popular source for cantera crashes
-    Wall w;  w.setArea(1); 
-    w.setExpansionRateCoeff(10); 
-    w.install(react,inert);
-
+    Wall w;  
+    w.setArea(1); 
+    w.setExpansionRateCoeff(expansionRateCoeff_); 
+    if(!useOldImplementation_) {
+        w.install(react,inert);
+    }
+    
     forAll(rho_,cellI) {	
       try {
         ReactorNet sim;
         //void setTolerances(doublereal rtol, doublereal atol) 
 // 	Info << "rtol=  " << sim.rtol() << "; atol=  " << sim.atol() << endl;
- 	sim.setTolerances(1e-8, 1e-9);
-// 	setNumerics(sim);
+
 // 	Info << "rtol=  " << sim.rtol() << "; atol=  " << sim.atol() << endl;
         sim.addReactor(&react);
         //sim.setInitialTime(0);
@@ -124,7 +126,11 @@ scalar canteraLocalTimeChemistryModel::solve(
  	//set up reactor
         react.insert(gas.gas());
 
-	inert.insert(gas0.gas());
+        setNumerics(sim);
+        
+        if(!useOldImplementation_) {
+            inert.insert(gas0.gas());
+        }
 
         scalar deltaT=min(defaultDeltaT,localTime[cellI]);
 //     	Info << "defaultDeltaT=  " << defaultDeltaT << "localTime=  "<<localTime[cellI]< "deltaT= "<< deltaT <<endl;
