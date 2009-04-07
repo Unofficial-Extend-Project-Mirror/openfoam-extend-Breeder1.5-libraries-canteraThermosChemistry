@@ -90,6 +90,18 @@ scalar canteraLocalTimeChemistryModel::solve(
 
     const scalarField localTime=characteristicTime()().internalField();
 
+    //to make reactor isobaric we need a reservoir for expansion
+    //set up inert reservoir
+    Reservoir inert;
+
+    //install a wall to make the reactor isobaric
+    //the wall area should be 1x-10x larger than the reactor volume
+    //this is a tradeoff between stability and accuracy
+    //wrong choice is a popular source for cantera crashes
+    Wall w;  w.setArea(1); 
+    w.setExpansionRateCoeff(10); 
+    w.install(react,inert);
+
     forAll(rho_,cellI) {	
       try {
         ReactorNet sim;
@@ -112,22 +124,7 @@ scalar canteraLocalTimeChemistryModel::solve(
  	//set up reactor
         react.insert(gas.gas());
 
-	//to make reactor isobaric we need a reservoir for expansion
-    	//set up inert reservoir
-	Reservoir inert;
 	inert.insert(gas0.gas());
-
-	//install a wall to make the reactor isobaric
-	//the wall area should be 1x-10x larger than the reactor volume
-	//this is a tradeoff between stability and accuracy
-	//wrong choice is a popular source for cantera crashes
-	Wall w;  w.setArea(1); 
-	w.setExpansionRateCoeff(10); 
-	w.install(react,inert);
-
-
-
-
 
         scalar deltaT=min(defaultDeltaT,localTime[cellI]);
 //     	Info << "defaultDeltaT=  " << defaultDeltaT << "localTime=  "<<localTime[cellI]< "deltaT= "<< deltaT <<endl;
