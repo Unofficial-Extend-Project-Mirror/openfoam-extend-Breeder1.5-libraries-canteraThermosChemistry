@@ -77,65 +77,31 @@ scalar canteraLocalTimeChemistryModel::solve(
 )
 {
     scalar dtMin=defaultDeltaT;
-    //    Info << "deltaT=  " << deltaT << endl;
-    const canteraMixture &mix=static_cast<const canteraMixture&>(thermo().composition());
-
-    scalarList RRtmp(RR_.size());
-    Reactor react;
     scalar Ns = RR_.size(); //number of species
-    const canteraThermo &gas1=mix.cellMixture(0);	
-    scalarList mw(RR_.size());
-    //delete &gas1;
-    gas1.gas().getMolecularWeights(mw.begin());
 
+    const canteraMixture &mix=static_cast<const canteraMixture&>(thermo().composition());
     const scalarField localTime=characteristicTime()().internalField();
 
-    //to make reactor isobaric we need a reservoir for expansion
-    //set up inert reservoir
-    Reservoir inert;
-
-    //install a wall to make the reactor isobaric
-    //the wall area should be 1x-10x larger than the reactor volume
-    //this is a tradeoff between stability and accuracy
-    //wrong choice is a popular source for cantera crashes
-    Wall w;  
-    w.setArea(1); 
-    w.setExpansionRateCoeff(expansionRateCoeff_); 
-    if(!useOldImplementation_) {
-        w.install(react,inert);
-    }
-    
     forAll(rho_,cellI) {	
       try {
-        ReactorNet sim;
-        //void setTolerances(doublereal rtol, doublereal atol) 
-// 	Info << "rtol=  " << sim.rtol() << "; atol=  " << sim.atol() << endl;
 
-// 	Info << "rtol=  " << sim.rtol() << "; atol=  " << sim.atol() << endl;
-        sim.addReactor(&react);
-        //sim.setInitialTime(0);
-
-
-        //        Info << cellI << endl;
-        scalarField c0(Ns), c1(Ns);
+	scalarField y0(Ns), y1(Ns);
         const canteraThermo &gas=mix.cellMixture(cellI);  //reacting gas
-    	const canteraThermo &gas0=mix.cellMixture(cellI); //nonreacting reservoir
 
-        gas.gas().getConcentrations(c0.begin());
-
+	gas.gas().getMassFractions(y0.begin());
+	scalar rhomean = gas.gas().density();
  	//set up reactor
+	//     Reactor react; //Isochoric reactor
+    	ConstPressureReactor react; //putting this outside the cellI loop speeds up calc but makes it unstable ?
         react.insert(gas.gas());
-
+    	ReactorNet sim;
+        sim.addReactor(&react);
         setNumerics(sim);
-        
-        if(!useOldImplementation_) {
-            inert.insert(gas0.gas());
-        }
 
         scalar deltaT=min(defaultDeltaT,localTime[cellI]);
-//     	Info << "defaultDeltaT=  " << defaultDeltaT << "localTime=  "<<localTime[cellI]< "deltaT= "<< deltaT <<endl;
 
 
+// 	scalar now=0;
 //         while(now < deltaT) { //use this loop togeter with step
             try {
                 sim.advance(deltaT);
@@ -145,20 +111,18 @@ scalar canteraLocalTimeChemistryModel::solve(
 
                 FatalErrorIn("canteraLocalTimeChemistryModel::solve")
                     << " With the state: " << gas 
-                        << " and the mixture " << c0 
+                        << " and the mixture " << y0 
                         << " Cantera complained in cell " << cellI << endl
                     //                   << e << endl
                         << abort(FatalError) ;
             }
 //         }
 
+	gas.gas().getMassFractions(y1.begin());
 
-        gas.gas().getConcentrations(c1.begin());
-        scalarField dc = c1 - c0;
-        //        Info << cellI << " " << RRtmp << endl;
         for(label i=0; i<Ns; i++)
         {
-            RR_[i][cellI] = dc[i]*mw[i]/deltaT;
+	    RR_[i][cellI] = (y1[i] - y0[i])*rhomean/deltaT; 
         }
       } catch(const Cantera::CanteraError& e) {
           Cantera::showErrors(std::cerr);
@@ -170,7 +134,7 @@ scalar canteraLocalTimeChemistryModel::solve(
       }
     }
 
-    return dtMin; //das ist nur für die Schrittweitenstrg da, denk ich
+    return dtMin; 
 
 }
 
