@@ -80,6 +80,10 @@ scalar canteraLocalTimeChemistryModel::solve(
     scalar Ns = RR_.size(); //number of species
 
     const canteraMixture &mix=static_cast<const canteraMixture&>(thermo().composition());
+
+    Reactor react;
+    ConstPressureReactor pReact;
+
     const scalarField localTime=characteristicTime()().internalField();
 
     forAll(rho_,cellI) {	
@@ -90,12 +94,20 @@ scalar canteraLocalTimeChemistryModel::solve(
 
 	gas.gas().getMassFractions(y0.begin());
 	scalar rhomean = gas.gas().density();
- 	//set up reactor
-	//     Reactor react; //Isochoric reactor
-    	ConstPressureReactor react; //putting this outside the cellI loop speeds up calc but makes it unstable ?
-        react.insert(gas.gas());
+        //set up reactor
+        Reactor react; //Isochoric reactor
+        ConstPressureReactor pReact; //putting this outside the cellI loop speeds up calc but makes it unstable ?
+
     	ReactorNet sim;
-        sim.addReactor(&react);
+
+        if(useOldImplementation_) {
+            sim.addReactor(&react);
+            react.insert(gas.gas());
+        } else {
+            sim.addReactor(&pReact);
+            pReact.insert(gas.gas());
+        }
+ 
         setNumerics(sim);
 
         scalar deltaT=min(defaultDeltaT,localTime[cellI]);

@@ -82,8 +82,6 @@ protected:
         scalar minH_;
         //- Use the old isoChoric implementation
         bool useOldImplementation_;
-        //- the expansion rate coefficient for the wall
-        scalar expansionRateCoeff_;
 
     void setNumerics(CanteraZeroD::ReactorNet &r);
 public:
