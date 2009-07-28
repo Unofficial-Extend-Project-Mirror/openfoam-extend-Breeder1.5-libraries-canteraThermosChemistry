@@ -318,12 +318,12 @@ void canteraChemistryModel::setNumerics(ReactorNet &sim) {
 
 void canteraChemistryModel::calcDQ(volScalarField &dQ)
 {
-    WarningIn("canteraChemistryModel::calcDQ(volScalarField &dQ)")
-        << "Strange error concerning the RR-Field. dQ is currently not computed"
-            << endl;
+     WarningIn("canteraChemistryModel::calcDQ(volScalarField &dQ)")
+         << "Calculation of dQ is not yet verified"
+             << endl;
 
 
-    return;
+//     return;
 
     const canteraMixture &mix=static_cast<const canteraMixture &>(thermo().composition());
 
@@ -335,15 +335,12 @@ void canteraChemistryModel::calcDQ(volScalarField &dQ)
         
         gas.gas().getPartialMolarEnthalpies(cp.begin()); 
         
-        Info << cp << endl;
-
         dQ[cellI]=0;
 
         forAll(cp,i) {
             dQ[cellI]+=RR_[i][cellI]*cp[i];
         }
     }
-    
 }
 
 } // namespace Foam
