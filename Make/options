@@ -21,7 +21,7 @@ LIB_LIBS = -lfiniteVolume \
     -lalternateChemistryModels
 
 ifeq ($(DYLD_LIBRARY_PATH),)
-  LIB_LIBS := $(LIB_LIBS) -lctlapack -lctblas 
+  LIB_LIBS := $(LIB_LIBS) -llapack -lblas 
 else
   LIB_LIBS := -framework Accelerate -single_module $(LIB_LIBS)
 endif
