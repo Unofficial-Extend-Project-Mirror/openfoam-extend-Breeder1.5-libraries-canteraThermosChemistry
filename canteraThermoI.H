@@ -114,7 +114,7 @@ Foam::scalar Foam::canteraThermo::alpha(const scalar T) const
         gas().setTemperature(T);
     }
 
-    return  gas().transport().thermalConductivity()/(gas().cv_mass()*gas().density());
+    return  gas().transport().thermalConductivity()/(gas().cp_mass());
 }
 
 Foam::scalar Foam::canteraThermo::rho(const scalar p,const scalar T) const
